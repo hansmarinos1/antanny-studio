@@ -3,10 +3,10 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
 
     // Buscar cliente
     const { data: cliente, error: errCliente } = await supabase
@@ -20,7 +20,7 @@ export async function GET(
     }
 
     // Buscar fidelidad
-    const { data: fidelidad, error: errFidelidad } = await supabase
+    const { data: fidelidad } = await supabase
       .from('fidelidad')
       .select('*')
       .eq('id_cliente', id)
