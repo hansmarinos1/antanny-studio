@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 import { Award, QrCode, LogOut, Calendar, Clock, PlusCircle, Bot, Sparkles, Send, X } from "lucide-react";
 
 export default function ClientePage() {
