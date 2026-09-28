@@ -1,177 +1,173 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation"; // <-- ENRUTADOR IMPORTADO
-import { Scissors, Mail, Lock, ArrowRight, UserCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
+import { Sparkles, Scissors, Lock, User, ArrowRight, Crown } from "lucide-react";
 
-export default function LoginPage() {
-  const router = useRouter(); // <-- INICIALIZAMOS EL ENRUTADOR
+export default function Home() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<"login" | "register" | "reset">("login");
-  const [message, setMessage] = useState<{ text: string; type: "error" | "success" } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [sessionChecking, setSessionChecking] = useState(true);
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setMessage(null);
-
-    try {
-      if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        setMessage({ text: "¡Sesión iniciada con éxito!", type: "success" });
-        
-        // REDIRECCIÓN AUTOMÁTICA AL PANEL
-        router.push("/dashboard"); 
-        
-      } else if (mode === "register") {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        setMessage({ text: "¡Registro exitoso! Revisa tu correo.", type: "success" });
-        
-      } else if (mode === "reset") {
-        const { error } = await supabase.auth.resetPasswordForEmail(email);
-        if (error) throw error;
-        setMessage({ text: "Enlace de recuperación enviado.", type: "success" });
+  // Verificar si ya hay sesión iniciada para redirigir automáticamente
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        if (session.user.email?.includes("admin")) {
+          router.push("/dashboard");
+        } else {
+          router.push("/cliente");
+        }
+      } else {
+        setSessionChecking(false);
       }
-    } catch (error: any) {
-      setMessage({ text: error.message, type: "error" });
-    } finally {
-      setIsLoading(false);
+    };
+    checkSession();
+  }, [router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg("");
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setErrorMsg("Credenciales incorrectas. Intenta nuevamente.");
+      setLoading(false);
+    } else {
+      // Magia del enrutamiento inteligente
+      if (email.includes("admin")) {
+        router.push("/dashboard");
+      } else {
+        router.push("/cliente");
+      }
     }
   };
 
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) setMessage({ text: error.message, type: "error" });
-  };
+  if (sessionChecking) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-[#E5C07B] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 selection:bg-[#E5C07B] selection:text-black">
-      {/* Círculo de luz de fondo (Glow) */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#E5C07B]/10 blur-[120px] rounded-full pointer-events-none" />
+    <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden flex flex-col md:flex-row">
+      {/* Luces ambientales y efectos (Background) */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#E5C07B]/10 blur-[150px] rounded-full pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-[#E5C07B]/5 blur-[120px] rounded-full pointer-events-none"></div>
 
-      <div className="w-full max-w-md bg-[#0A0A0A]/80 backdrop-blur-xl border border-[#E5C07B]/20 rounded-3xl p-8 shadow-2xl relative z-10">
-        
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 rounded-full border-2 border-[#E5C07B] flex items-center justify-center bg-[#E5C07B]/10 shadow-[0_0_15px_rgba(229,192,123,0.3)]">
-            <Scissors className="text-[#E5C07B] w-8 h-8" />
-          </div>
+      {/* SECCIÓN IZQUIERDA: Marca y Slogan */}
+      <div className="w-full md:w-1/2 p-8 md:p-20 flex flex-col justify-center relative z-10 min-h-[50vh] md:min-h-screen">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E5C07B]/10 border border-[#E5C07B]/20 w-fit mb-6">
+          <Sparkles size={14} className="text-[#E5C07B]" />
+          <span className="text-xs font-semibold text-[#E5C07B] tracking-widest uppercase">Next-Gen Barbershop</span>
         </div>
-
-        <h1 className="text-2xl font-bold text-center text-[#E5C07B] tracking-widest mb-1">
-          ANTANNI STUDIO
+        
+        <h1 className="text-5xl md:text-7xl font-black mb-4 tracking-tighter leading-tight">
+          ANTANNI <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#E5C07B] to-[#cda661]">
+            STUDIO
+          </span>
         </h1>
-        <p className="text-center text-gray-400 text-sm mb-8 tracking-wider">
-          {mode === "reset" ? "RECUPERAR ACCESO" : "SISTEMA DE GESTIÓN & FIDELIDAD"}
+        
+        <p className="text-gray-400 text-lg max-w-md font-light leading-relaxed mb-8">
+          Eleva tu estilo. Gestiona tus citas, acumula puntos VIP y descubre tu mejor versión con nuestra plataforma impulsada por tecnología de punta.
         </p>
 
-        {/* Alertas */}
-        {message && (
-          <div className={`p-4 mb-6 rounded-xl text-sm font-medium border ${message.type === "error" ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-green-500/10 border-green-500/30 text-green-400"}`}>
-            {message.text}
+        <div className="flex gap-4">
+          <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
+            <Crown size={16} className="text-[#E5C07B]" /> Programa VIP
           </div>
-        )}
-
-        <form onSubmit={handleAuth} className="space-y-5">
-          {/* Input Email */}
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Mail className="h-5 w-5 text-[#E5C07B]/70 group-focus-within:text-[#E5C07B] transition-colors" />
-            </div>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#111] border border-[#222] text-white rounded-xl pl-12 pr-4 py-4 focus:outline-none focus:border-[#E5C07B]/50 focus:ring-1 focus:ring-[#E5C07B]/50 transition-all placeholder:text-gray-600"
-              placeholder="Correo electrónico"
-            />
+          <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
+            <Scissors size={16} className="text-[#E5C07B]" /> Expertos en Estilo
           </div>
-
-          {/* Input Password (Oculto en modo reset) */}
-          {mode !== "reset" && (
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-[#E5C07B]/70 group-focus-within:text-[#E5C07B] transition-colors" />
-              </div>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#111] border border-[#222] text-white rounded-xl pl-12 pr-4 py-4 focus:outline-none focus:border-[#E5C07B]/50 focus:ring-1 focus:ring-[#E5C07B]/50 transition-all placeholder:text-gray-600"
-                placeholder="Contraseña"
-              />
-            </div>
-          )}
-
-          {/* Botón Principal */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-black font-bold tracking-widest rounded-xl py-4 flex justify-center items-center hover:shadow-[0_0_20px_rgba(229,192,123,0.4)] transition-all active:scale-[0.98] disabled:opacity-50"
-          >
-            {isLoading ? (
-              <span className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
-            ) : (
-              <>
-                {mode === "login" && "INICIAR SESIÓN"}
-                {mode === "register" && "CREAR CUENTA"}
-                {mode === "reset" && "ENVIAR ENLACE"}
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* Enlaces para cambiar de modo */}
-        <div className="mt-6 text-center space-y-4">
-          {mode === "login" ? (
-            <>
-              <p className="text-gray-500 text-sm">
-                ¿No tienes cuenta?{" "}
-                <button onClick={() => setMode("register")} className="text-[#E5C07B] hover:underline font-semibold">Regístrate</button>
-              </p>
-              <button onClick={() => setMode("reset")} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
-                ¿Olvidaste tu contraseña?
-              </button>
-            </>
-          ) : (
-            <button onClick={() => setMode("login")} className="text-[#E5C07B] hover:underline text-sm font-semibold">
-              Volver al inicio de sesión
-            </button>
-          )}
         </div>
+      </div>
 
-        {/* Botón Google (Oculto en modo reset) */}
-        {mode !== "reset" && (
-          <>
-            <div className="flex items-center my-6">
-              <div className="flex-1 border-t border-[#222]"></div>
-              <span className="px-4 text-gray-500 text-xs tracking-widest font-semibold">O INGRESA CON</span>
-              <div className="flex-1 border-t border-[#222]"></div>
+      {/* SECCIÓN DERECHA: Login "Glassmorphism" */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 relative z-10">
+        <div className="w-full max-w-md bg-[#0a0a0a]/60 backdrop-blur-2xl border border-[#222] p-8 md:p-10 rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
+          
+          {/* Resplandor interno de la tarjeta */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#E5C07B]/10 blur-3xl rounded-full pointer-events-none"></div>
+
+          <h2 className="text-2xl font-bold text-white mb-2">Bienvenido de vuelta</h2>
+          <p className="text-sm text-gray-400 mb-8">Ingresa tus credenciales para acceder a tu portal.</p>
+
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-xs text-gray-400 uppercase tracking-widest font-semibold mb-2">
+                Correo Electrónico
+              </label>
+              <div className="relative">
+                <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-[#111] border border-[#333] rounded-xl py-3.5 pl-11 pr-4 text-white focus:border-[#E5C07B] outline-none transition-all placeholder:text-gray-600"
+                  placeholder="admin@antannystudio.com"
+                />
+              </div>
             </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 uppercase tracking-widest font-semibold mb-2">
+                Contraseña
+              </label>
+              <div className="relative">
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-[#111] border border-[#333] rounded-xl py-3.5 pl-11 pr-4 text-white focus:border-[#E5C07B] outline-none transition-all placeholder:text-gray-600"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            {errorMsg && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-lg text-center">
+                {errorMsg}
+              </div>
+            )}
 
             <button
-              onClick={handleGoogleLogin}
-              type="button"
-              className="w-full bg-[#111] border border-[#333] hover:border-[#E5C07B]/50 text-white font-semibold rounded-xl py-4 flex justify-center items-center transition-all"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-[#E5C07B] to-[#cda661] text-black font-bold py-4 rounded-xl mt-4 hover:shadow-[0_0_20px_rgba(229,192,123,0.4)] transition-all flex justify-center items-center gap-2 group disabled:opacity-50"
             >
-              <UserCircle className="mr-3 w-5 h-5 text-gray-300" />
-              Continuar con Google
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  Ingresar al Sistema
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
-          </>
-        )}
+          </form>
+
+          <div className="mt-8 text-center border-t border-[#222] pt-6">
+            <p className="text-xs text-gray-500">
+              ¿No tienes cuenta? <span className="text-[#E5C07B] cursor-pointer hover:underline">Regístrate en el local</span>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
