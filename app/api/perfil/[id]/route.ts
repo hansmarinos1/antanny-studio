@@ -8,7 +8,6 @@ export async function GET(
   try {
     const { id } = await context.params;
 
-    // Buscar cliente
     const { data: cliente, error: errCliente } = await supabase
       .from('clientes')
       .select('*')
@@ -19,7 +18,6 @@ export async function GET(
       return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });
     }
 
-    // Buscar fidelidad
     const { data: fidelidad } = await supabase
       .from('fidelidad')
       .select('*')
