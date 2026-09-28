@@ -1,11 +1,18 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
-// Asegúrate de agregar GEMINI_API_KEY en tu Vercel y en tu .env.local
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-
 export async function POST(req: Request) {
   try {
+    // 1. Verificamos si la llave realmente está cargando
+    const apiKey = process.env.GEMINI_API_KEY || '';
+    
+    if (!apiKey) {
+      return NextResponse.json({ 
+        respuesta: "⚠️ Error interno: La aplicación no está detectando la variable GEMINI_API_KEY." 
+      });
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
     const { mensaje } = await req.json();
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
@@ -19,10 +26,11 @@ export async function POST(req: Request) {
     const respuesta = result.response.text();
 
     return NextResponse.json({ respuesta });
-  } catch (error) {
-    console.error(error);
+  } catch (error: any) {
+    console.error('Error de IA:', error);
+    // 2. Si falla Google, mostramos el error exacto en el chat
     return NextResponse.json(
-      { respuesta: "Lo siento, mi conexión neuronal está en mantenimiento. Intenta en unos minutos." },
+      { respuesta: `⚠️ Error de conexión con Google: ${error.message}` },
       { status: 500 }
     );
   }
